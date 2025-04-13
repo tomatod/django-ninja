@@ -175,6 +175,48 @@ def test_fields_all():
     }
 
 
+def test_is_blank_nullable():
+    class BlankTestModel(models.Model):
+        field1 = models.CharField(blank=True, null=False)
+        field2 = models.IntegerField(blank=False)
+        field3 = models.DateField(blank=True, null=True)
+        field4 = models.FileField(blank=False, null=True)
+        field5 = models.BooleanField(blank=True, null=False)
+
+        class Meta:
+            app_label = "tests"
+
+    class BlankTestSchema(ModelSchema):
+        class Meta:
+            model = BlankTestModel
+            fields = "__all__"
+            fields_optional = ["field5"]
+            is_blank_nullable = False
+
+    assert BlankTestSchema.json_schema() == {
+        "title": "BlankTestSchema",
+        "type": "object",
+        "properties": {
+            "id": {"title": "ID", "anyOf": [{"type": "integer"}, {"type": "null"}]},
+            "field1": {"title": "Field1", "type": "string"},
+            "field2": {"title": "Field2", "type": "integer"},
+            "field3": {
+                "title": "Field3",
+                "anyOf": [{"type": "string", "format": "date"}, {"type": "null"}],
+            },
+            "field4": {
+                "title": "Field4",
+                "anyOf": [{"type": "string"}, {"type": "null"}],
+            },
+            "field5": {
+                "title": "Field5",
+                "anyOf": [{"type": "boolean"}, {"type": "null"}],
+            },
+        },
+        "required": ["field1", "field2"],
+    }
+
+
 def test_model_schema_without_config():
     with pytest.raises(
         ConfigError,
